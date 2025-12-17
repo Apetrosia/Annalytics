@@ -1,6 +1,6 @@
 import React from "react";
 
-function Releases() {
+function Releases({ data }) {
     return (
         <div
         style={{

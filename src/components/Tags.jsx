@@ -1,6 +1,6 @@
 import React from "react";
 
-function Tags() {
+function Tags({ data }) {
   return (
     <div
       style={{

@@ -19,7 +19,7 @@ function parsePercent(str) {
   return Number.isNaN(value) ? null : value;
 }
 
-const selectedYear = 2023
+const selectedYear = 2012
 
 const data = rawData.map((d) => {
   const price = parsePrice(d["Launch Price"]);
@@ -68,7 +68,7 @@ function App() {
     <div style={{ maxWidth: "900px", margin: "0 auto", padding: "24px" }}>
       <h1>Steam Trends 2023</h1>
 
-      <Releases data={data} />
+      <Releases data={data} selectedYear={selectedYear} />
       <Smth data={data} />
       <Tags data={data} />
     </div>

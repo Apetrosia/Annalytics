@@ -1,12 +1,33 @@
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
 
-function Releases({ data }) {
+function Releases({ data, selectedYear }) {
     const svgRef = useRef(null);
     const tooltipRef = useRef(null);
 
     useEffect(() => {
-        const values = [5, 2, 8, 4, 10, 7, 3, 6, 9, 1, 4, 8];
+        // 1. Фильтруем по выбранному году
+        const yearData = data.filter((d) => d.releaseYear === selectedYear);
+
+        // 2. Считаем количество релизов по месяцам (1–12 в данных -> 0–11 в индексах)
+        const countsByMonth = new Array(12).fill(0);
+        yearData.forEach((d) => {
+            const m = d.releaseMonth; // 1–12
+            if (m >= 1 && m <= 12) {
+                countsByMonth[m - 1] += 1;
+            }
+        });
+
+        /*const points = values.map((v, i) => ({
+            monthIndex: i,
+            value: v,
+        }));*/
+
+        // массив точек для d3
+        const points = countsByMonth.map((v, i) => ({
+            monthIndex: i, // 0–11
+            value: v,
+        }));
 
         const margin = { top: 24, right: 24, bottom: 40, left: 80 };
         const width = 700;
@@ -29,11 +50,9 @@ function Releases({ data }) {
             .range([0, innerWidth])
             .padding(0.5);
 
-        const maxValue = d3.max(values) || 0;
-
         const yScale = d3
             .scaleLinear()
-            .domain([0, maxValue])
+            .domain([d3.min(points, (d) => d.value) - 3, d3.max(points, (d) => d.value) + 3])
             .nice()
             .range([innerHeight, 0]);
 
@@ -47,11 +66,6 @@ function Releases({ data }) {
 
         const yAxis = d3.axisLeft(yScale).ticks(5);
         g.append("g").call(yAxis);
-
-        const points = values.map((v, i) => ({
-            monthIndex: i,
-            value: v,
-        }));
 
         const line = d3
             .line()
@@ -97,6 +111,8 @@ function Releases({ data }) {
                 tooltip.style("opacity", 0);
             });
     }, []);
+
+    console.log("Data is ready");
 
     return (
         <div

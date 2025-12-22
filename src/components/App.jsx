@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Releases from "./Releases";
-import Smth from "./Reviews";
+import Reviews from "./Reviews";
 import Tags from "./Tags";
 
 import rawData from "../../data/Steam Trends 2023.json"; // синхронная загрузка файла [file:128]
@@ -180,10 +180,6 @@ function App() {
               </option>
             ))}
           </select>
-        </div>
-
-        <div style={{ fontSize: "12px", color: "#777" }}>
-          Здесь будут элементы управления фильтрами (год, жанры, теги и т.д.).
         </div>
       </div>
     </div>

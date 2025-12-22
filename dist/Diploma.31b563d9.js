@@ -25016,10 +25016,10 @@ parcelHelpers.defineInteropFlag(exports);
 var _jsxDevRuntime = require("react/jsx-dev-runtime");
 var _react = require("react");
 var _reactDefault = parcelHelpers.interopDefault(_react);
-var _sales = require("./Sales");
-var _salesDefault = parcelHelpers.interopDefault(_sales);
 var _releases = require("./Releases");
 var _releasesDefault = parcelHelpers.interopDefault(_releases);
+var _smth = require("./Smth");
+var _smthDefault = parcelHelpers.interopDefault(_smth);
 var _tags = require("./Tags");
 var _tagsDefault = parcelHelpers.interopDefault(_tags);
 var _steamTrends2023Json = require("../../data/Steam Trends 2023.json");
@@ -25036,6 +25036,7 @@ function parsePercent(str) {
     const value = Number(normalized);
     return Number.isNaN(value) ? null : value;
 }
+const selectedYear = 2023;
 const data = (0, _steamTrends2023JsonDefault.default).map((d)=>{
     const price = parsePrice(d["Launch Price"]);
     const reviewsTotal = Number(d["Reviews Total"]) || 0;
@@ -25074,13 +25075,6 @@ function App() {
                 children: "Steam Trends 2023"
             }, void 0, false, {
                 fileName: "src/components/App.jsx",
-                lineNumber: 67,
-                columnNumber: 7
-            }, this),
-            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _salesDefault.default), {
-                data: data
-            }, void 0, false, {
-                fileName: "src/components/App.jsx",
                 lineNumber: 69,
                 columnNumber: 7
             }, this),
@@ -25088,20 +25082,27 @@ function App() {
                 data: data
             }, void 0, false, {
                 fileName: "src/components/App.jsx",
-                lineNumber: 70,
+                lineNumber: 71,
+                columnNumber: 7
+            }, this),
+            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _smthDefault.default), {
+                data: data
+            }, void 0, false, {
+                fileName: "src/components/App.jsx",
+                lineNumber: 72,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _tagsDefault.default), {
                 data: data
             }, void 0, false, {
                 fileName: "src/components/App.jsx",
-                lineNumber: 71,
+                lineNumber: 73,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "src/components/App.jsx",
-        lineNumber: 66,
+        lineNumber: 68,
         columnNumber: 5
     }, this);
 }
@@ -25115,7 +25116,7 @@ $RefreshReg$(_c, "App");
   globalThis.$RefreshReg$ = prevRefreshReg;
   globalThis.$RefreshSig$ = prevRefreshSig;
 }
-},{"react/jsx-dev-runtime":"dVPUn","react":"jMk1U","./Releases":"2bhS2","./Sales":"f5DJn","./Tags":"50MwP","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"7h6Pi","../../data/Steam Trends 2023.json":"gtnfR"}],"2bhS2":[function(require,module,exports,__globalThis) {
+},{"react/jsx-dev-runtime":"dVPUn","react":"jMk1U","./Releases":"2bhS2","./Tags":"50MwP","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"7h6Pi","../../data/Steam Trends 2023.json":"gtnfR","./Smth":"dVbdQ"}],"2bhS2":[function(require,module,exports,__globalThis) {
 var $parcel$ReactRefreshHelpers$821f = require("@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js");
 $parcel$ReactRefreshHelpers$821f.init();
 var prevRefreshReg = globalThis.$RefreshReg$;
@@ -25128,35 +25129,127 @@ parcelHelpers.defineInteropFlag(exports);
 var _jsxDevRuntime = require("react/jsx-dev-runtime");
 var _react = require("react");
 var _reactDefault = parcelHelpers.interopDefault(_react);
+var _d3 = require("d3");
+var _s = $RefreshSig$();
 function Releases({ data }) {
+    _s();
+    const svgRef = (0, _react.useRef)(null);
+    const tooltipRef = (0, _react.useRef)(null);
+    (0, _react.useEffect)(()=>{
+        const values = [
+            5,
+            2,
+            8,
+            4,
+            10,
+            7,
+            3,
+            6,
+            9,
+            1,
+            4,
+            8
+        ];
+        const margin = {
+            top: 24,
+            right: 24,
+            bottom: 40,
+            left: 80
+        };
+        const width = 700;
+        const height = 400;
+        const innerWidth = width - margin.left - margin.right;
+        const innerHeight = height - margin.top - margin.bottom;
+        const svg = _d3.select(svgRef.current);
+        svg.selectAll("*").remove();
+        svg.attr("width", width).attr("height", height);
+        const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+        // шкалы
+        const xScale = _d3.scalePoint().domain(_d3.range(0, 12)).range([
+            0,
+            innerWidth
+        ]).padding(0.5);
+        const maxValue = _d3.max(values) || 0;
+        const yScale = _d3.scaleLinear().domain([
+            0,
+            maxValue
+        ]).nice().range([
+            innerHeight,
+            0
+        ]);
+        // оси (как раньше, опускаю подробности)
+        const xAxis = _d3.axisBottom(xScale).tickFormat((d)=>_d3.timeFormat("%b")(new Date(2023, d, 1)));
+        g.append("g").attr("transform", `translate(0,${innerHeight})`).call(xAxis);
+        const yAxis = _d3.axisLeft(yScale).ticks(5);
+        g.append("g").call(yAxis);
+        const points = values.map((v, i)=>({
+                monthIndex: i,
+                value: v
+            }));
+        const line = _d3.line().x((d)=>xScale(d.monthIndex)).y((d)=>yScale(d.value));
+        g.append("path").datum(points).attr("fill", "none").attr("stroke", "#1976d2").attr("stroke-width", 2).attr("d", line);
+        const tooltip = _d3.select(tooltipRef.current);
+        // точки + тултипы
+        g.selectAll(".point").data(points).enter().append("circle").attr("class", "point").attr("cx", (d)=>xScale(d.monthIndex)).attr("cy", (d)=>yScale(d.value)).attr("r", 4).attr("fill", "#1976d2").on("mouseover", function(event, d) {
+            _d3.select(this).attr("fill", "#da963dff");
+            tooltip.style("opacity", 1).html(`\u{420}\u{435}\u{43B}\u{438}\u{437}\u{43E}\u{432}: ${d.value}`).style("left", event.pageX + "px").style("top", event.pageY + "px");
+        }).on("mousemove", function(event) {
+            // при движении мыши обновляем позицию тултипа
+            tooltip.style("left", event.pageX + "px").style("top", event.pageY + "px");
+        }).on("mouseout", function() {
+            // возвращаем цвет и прячем тултип
+            _d3.select(this).attr("fill", "#1976d2");
+            tooltip.style("opacity", 0);
+        });
+    }, []);
     return /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
         style: {
             border: "1px solid #ccc",
             padding: "16px",
-            marginBottom: "16px"
+            marginBottom: "16px",
+            position: "relative"
         },
         children: [
             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("h2", {
-                children: "\u041A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u0440\u0435\u043B\u0438\u0437\u043E\u0432 \u043F\u043E \u043C\u0435\u0441\u044F\u0446\u0430\u043C"
+                children: "\u0420\u0435\u043B\u0438\u0437\u044B \u043F\u043E \u043C\u0435\u0441\u044F\u0446\u0430\u043C \u0433\u043E\u0434\u0430"
             }, void 0, false, {
                 fileName: "src/components/Releases.jsx",
-                lineNumber: 12,
-                columnNumber: 9
+                lineNumber: 110,
+                columnNumber: 13
+            }, this),
+            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("svg", {
+                ref: svgRef
+            }, void 0, false, {
+                fileName: "src/components/Releases.jsx",
+                lineNumber: 111,
+                columnNumber: 13
             }, this),
             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
-                children: "\u0417\u0434\u0435\u0441\u044C \u043F\u043E\u0437\u0436\u0435 \u0431\u0443\u0434\u0435\u0442 \u0441\u0442\u043E\u043B\u0431\u0447\u0430\u0442\u0430\u044F \u0434\u0438\u0430\u0433\u0440\u0430\u043C\u043C\u0430"
+                ref: tooltipRef,
+                style: {
+                    position: "absolute",
+                    pointerEvents: "none",
+                    background: "rgba(0,0,0,0.75)",
+                    color: "#fff",
+                    padding: "4px 8px",
+                    borderRadius: "4px",
+                    fontSize: "12px",
+                    opacity: 0,
+                    transition: "opacity 0.1s"
+                }
             }, void 0, false, {
                 fileName: "src/components/Releases.jsx",
-                lineNumber: 13,
-                columnNumber: 9
+                lineNumber: 112,
+                columnNumber: 13
             }, this)
         ]
     }, void 0, true, {
         fileName: "src/components/Releases.jsx",
-        lineNumber: 5,
+        lineNumber: 102,
         columnNumber: 9
     }, this);
 }
+_s(Releases, "jyg6kBjq0Vkx+9H7Hda18hFrSo0=");
 _c = Releases;
 exports.default = Releases;
 var _c;
@@ -25167,7 +25260,7 @@ $RefreshReg$(_c, "Releases");
   globalThis.$RefreshReg$ = prevRefreshReg;
   globalThis.$RefreshSig$ = prevRefreshSig;
 }
-},{"react/jsx-dev-runtime":"dVPUn","react":"jMk1U","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"7h6Pi"}],"jnFvT":[function(require,module,exports,__globalThis) {
+},{"react/jsx-dev-runtime":"dVPUn","react":"jMk1U","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"7h6Pi","d3":"eyk9f"}],"jnFvT":[function(require,module,exports,__globalThis) {
 exports.interopDefault = function(a) {
     return a && a.__esModule ? a : {
         default: a
@@ -27475,99 +27568,7 @@ function $da9882e673ac146b$var$ErrorOverlay() {
     return null;
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"f5DJn":[function(require,module,exports,__globalThis) {
-var $parcel$ReactRefreshHelpers$e7d4 = require("@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js");
-$parcel$ReactRefreshHelpers$e7d4.init();
-var prevRefreshReg = globalThis.$RefreshReg$;
-var prevRefreshSig = globalThis.$RefreshSig$;
-$parcel$ReactRefreshHelpers$e7d4.prelude(module);
-
-try {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-var _jsxDevRuntime = require("react/jsx-dev-runtime");
-var _react = require("react");
-var _reactDefault = parcelHelpers.interopDefault(_react);
-var _d3 = require("d3");
-var _steamTrends2023Json = require("../../data/Steam Trends 2023.json");
-var _steamTrends2023JsonDefault = parcelHelpers.interopDefault(_steamTrends2023Json);
-var _s = $RefreshSig$();
-function Sales({ data }) {
-    _s();
-    const svgRef = (0, _react.useRef)(null);
-    (0, _react.useEffect)(()=>{
-        const margin = {
-            top: 24,
-            right: 24,
-            bottom: 40,
-            left: 80
-        };
-        const width = 700;
-        const height = 400;
-        const innerWidth = width - margin.left - margin.right;
-        const innerHeight = height - margin.top - margin.bottom;
-        const svg = _d3.select(svgRef.current);
-        svg.selectAll("*").remove();
-        svg.attr("width", width).attr("height", height);
-        const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-        const xScale = _d3.scalePoint().domain(_d3.range(0, 12)).range([
-            0,
-            innerWidth
-        ]).padding(0.5);
-        const xAxis = _d3.axisBottom(xScale).tickFormat((d)=>_d3.timeFormat("%b")(new Date(2023, d, 1)));
-        g.append("g").attr("transform", `translate(0,${innerHeight})`).call(xAxis).selectAll("text").style("font-size", "12px");
-        g.append("text").attr("x", innerWidth / 2).attr("y", innerHeight + 32).attr("text-anchor", "middle").style("font-size", "12px").text("\u041C\u0435\u0441\u044F\u0446");
-        const yScale = _d3.scaleLinear().domain([
-            0,
-            1
-        ]).range([
-            innerHeight,
-            0
-        ]);
-        const yAxis = _d3.axisLeft(yScale).ticks(5);
-        g.append("g").call(yAxis).selectAll("text").style("font-size", "12px");
-        g.append("text").attr("transform", "rotate(-90)").attr("x", -innerHeight / 2).attr("y", -56).attr("text-anchor", "middle").style("font-size", "12px").text("\u0421\u0443\u043C\u043C\u0430\u0440\u043D\u0430\u044F \u0432\u044B\u0440\u0443\u0447\u043A\u0430, $");
-    }, []);
-    return /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
-        style: {
-            border: "1px solid #ccc",
-            padding: "16px",
-            marginBottom: "16px"
-        },
-        children: [
-            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("h2", {
-                children: "\u041F\u0440\u043E\u0434\u0430\u0436\u0438 \u043F\u043E \u043C\u0435\u0441\u044F\u0446\u0430\u043C"
-            }, void 0, false, {
-                fileName: "src/components/Sales.jsx",
-                lineNumber: 75,
-                columnNumber: 13
-            }, this),
-            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("svg", {
-                ref: svgRef
-            }, void 0, false, {
-                fileName: "src/components/Sales.jsx",
-                lineNumber: 76,
-                columnNumber: 13
-            }, this)
-        ]
-    }, void 0, true, {
-        fileName: "src/components/Sales.jsx",
-        lineNumber: 69,
-        columnNumber: 9
-    }, this);
-}
-_s(Sales, "89Ty783ABEwsfMbSOeu9vscWF34=");
-_c = Sales;
-exports.default = Sales;
-var _c;
-$RefreshReg$(_c, "Sales");
-
-  $parcel$ReactRefreshHelpers$e7d4.postlude(module);
-} finally {
-  globalThis.$RefreshReg$ = prevRefreshReg;
-  globalThis.$RefreshSig$ = prevRefreshSig;
-}
-},{"react/jsx-dev-runtime":"dVPUn","react":"jMk1U","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"7h6Pi","d3":"eyk9f"}],"eyk9f":[function(require,module,exports,__globalThis) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"eyk9f":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _d3Array = require("d3-array");
@@ -50997,6 +50998,58 @@ $RefreshReg$(_c, "Tags");
 },{"react/jsx-dev-runtime":"dVPUn","react":"jMk1U","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"7h6Pi"}],"gtnfR":[function(require,module,exports,__globalThis) {
 module.exports = JSON.parse('[{"App ID":730,"Title":"Counter-Strike: Global Offensive","Reviews Total":7382695,"Reviews Score Fancy":"88%","Release Date":"2012-08-21","Reviews D7":null,"Reviews D30":null,"Reviews D90":null,"Launch Price":"$14,99","Tags":"FPS, Shooter, Multiplayer, Competitive, Action, Team Based, eSports, Tactical, First Person, PvP, Online Co Op, Co op, Strategy, Military, War, Difficult, Trading, Realistic, Fast Paced, Moddable","name_slug":null,"Revenue Estimated":"$110 666 598,05","Modified Tags":"FPS_, Shooter_, Multiplayer_, Competitive_, Action_, Team Based_, eSports_, Tactical_, First Person_, PvP_, Online Co Op_, Co op_, Strategy_, Military_, War_, Difficult_, Trading_, Realistic_, Fast Paced_, Moddable_","Steam Page":"https://store.steampowered.com/app/730"},{"App ID":578080,"Title":"PUBG: BATTLEGROUNDS","Reviews Total":2201296,"Reviews Score Fancy":"57%","Release Date":"2017-12-21","Reviews D7":null,"Reviews D30":null,"Reviews D90":null,"Launch Price":"$29,99","Tags":"Survival, Shooter, Battle Royale, Multiplayer, FPS, PvP, Third Person Shooter, Action, Online Co Op, Tactical, Co op, First Person, Strategy, Early Access, Competitive, Third Person, Team Based, Difficult, Simulation, Stealth","name_slug":null,"Revenue Estimated":"$66 016 867,04","Modified Tags":"Survival_, Shooter_, Battle Royale_, Multiplayer_, FPS_, PvP_, Third Person Shooter_, Action_, Online Co Op_, Tactical_, Co op_, First Person_, Strategy_, Early Access_, Competitive_, Third Person_, Team Based_, Difficult_, Simulation_, Stealth_","Steam Page":"https://store.steampowered.com/app/578080"},{"App ID":570,"Title":"Dota 2","Reviews Total":2017009,"Reviews Score Fancy":"82%","Release Date":"2013-07-09","Reviews D7":null,"Reviews D30":null,"Reviews D90":null,"Launch Price":"$29,99","Tags":"Free to Play, MOBA, Multiplayer, Strategy, eSports, Team Based, Competitive, Action, Online Co Op, PvP, Difficult, Co op, RTS, Tower Defense, RPG, Fantasy, Character Customization, Replay Value, Action RPG, Simulation","name_slug":null,"Revenue Estimated":"$60 490 099,91","Modified Tags":"Free to Play_, MOBA_, Multiplayer_, Strategy_, eSports_, Team Based_, Competitive_, Action_, Online Co Op_, PvP_, Difficult_, Co op_, RTS_, Tower Defense_, RPG_, Fantasy_, Character Customization_, Replay Value_, Action RPG_, Simulation_","Steam Page":"https://store.steampowered.com/app/570"},{"App ID":271590,"Title":"Grand Theft Auto V","Reviews Total":1322782,"Reviews Score Fancy":"89,85%","Release Date":"2015-04-13","Reviews D7":null,"Reviews D30":null,"Reviews D90":null,"Launch Price":"$29,99","Tags":"Open World, Action, Multiplayer, Crime, Automobile Sim, Third Person, First Person, Shooter, Mature, Adventure, Singleplayer, Third Person Shooter, Racing, Co op, Atmospheric, Sandbox, Funny, Great Soundtrack, Comedy, Moddable","name_slug":null,"Revenue Estimated":"$39 670 232,18","Modified Tags":"Open World_, Action_, Multiplayer_, Crime_, Automobile Sim_, Third Person_, First Person_, Shooter_, Mature_, Adventure_, Singleplayer_, Third Person Shooter_, Racing_, Co op_, Atmospheric_, Sandbox_, Funny_, Great Soundtrack_, Comedy_, Moddable_","Steam Page":"https://store.steampowered.com/app/271590"},{"App ID":359550,"Title":"Tom Clancy\'s Rainbow Six\xae Siege","Reviews Total":978762,"Reviews Score Fancy":"86%","Release Date":"2015-12-01","Reviews D7":null,"Reviews D30":null,"Reviews D90":null,"Launch Price":"$59,99","Tags":"FPS, PvP, eSports, Shooter, Multiplayer, Tactical, Competitive, Online Co Op, Action, Hero Shooter, Team Based, Military, War, Realistic, Destruction, Strategy, Co op, First Person, Difficult, 3D","name_slug":null,"Revenue Estimated":"$58 715 932,38","Modified Tags":"FPS_, PvP_, eSports_, Shooter_, Multiplayer_, Tactical_, Competitive_, Online Co Op_, Action_, Hero Shooter_, Team Based_, Military_, War_, Realistic_, Destruction_, Strategy_, Co op_, First Person_, Difficult_, 3D_","Steam Page":"https://store.steampowered.com/app/359550"},{"App ID":105600,"Title":"Terraria","Reviews Total":927752,"Reviews Score Fancy":"97%","Release Date":"2011-05-16","Reviews D7":null,"Reviews D30":null,"Reviews D90":null,"Launch Price":"$9,99","Tags":"Open World Survival Craft, Sandbox, Survival, 2D, Multiplayer, Adventure, Pixel Graphics, Crafting, Building, Exploration, Co op, Open World, Online Co Op, Indie, Action, RPG, Singleplayer, Replay Value, Platformer, Atmospheric","name_slug":null,"Revenue Estimated":"$9 268 242,48","Modified Tags":"Open World Survival Craft_, Sandbox_, Survival_, 2D_, Multiplayer_, Adventure_, Pixel Graphics_, Crafting_, Building_, Exploration_, Co op_, Open World_, Online Co Op_, Indie_, Action_, RPG_, Singleplayer_, Replay Value_, Platformer_, Atmospheric_","Steam Page":"https://store.steampowered.com/app/105600"},{"App ID":4000,"Title":"Garry\'s Mod","Reviews Total":841853,"Reviews Score Fancy":"96%","Release Date":"2006-11-29","Reviews D7":null,"Reviews D30":null,"Reviews D90":null,"Launch Price":"$9,99","Tags":"Sandbox, Multiplayer, Funny, Moddable, Building, Mod, Comedy, Co op, First Person, Physics, Simulation, Online Co Op, FPS, Singleplayer, Action, Animation & Modeling, Shooter, Indie, Massively Multiplayer, Adventure","name_slug":null,"Revenue Estimated":"$8 410 111,47","Modified Tags":"Sandbox_, Multiplayer_, Funny_, Moddable_, Building_, Mod_, Comedy_, Co op_, First Person_, Physics_, Simulation_, Online Co Op_, FPS_, Singleplayer_, Action_, Animation & Modeling_, Shooter_, Indie_, Massively Multiplayer_, Adventure_","Steam Page":"https://store.steampowered.com/app/4000"},{"App ID":252490,"Title":"Rust","Reviews Total":775223,"Reviews Score Fancy":"87%","Release Date":"2018-02-08","Reviews D7":null,"Reviews D30":null,"Reviews D90":null,"Launch Price":"$39,99","Tags":"Survival, Crafting, Multiplayer, Open World, Open World Survival Craft, Building, PvP, Sandbox, Adventure, First Person, Action, FPS, Nudity, Co op, Shooter, Online Co Op, Indie, Early Access, Post apocalyptic, Simulation","name_slug":null,"Revenue Estimated":"$31 001 167,77","Modified Tags":"Survival_, Crafting_, Multiplayer_, Open World_, Open World Survival Craft_, Building_, PvP_, Sandbox_, Adventure_, First Person_, Action_, FPS_, Nudity_, Co op_, Shooter_, Online Co Op_, Indie_, Early Access_, Post apocalyptic_, Simulation_","Steam Page":"https://store.steampowered.com/app/252490"},{"App ID":292030,"Title":"The Witcher\xae 3: Wild Hunt","Reviews Total":662523,"Reviews Score Fancy":"96%","Release Date":"2015-05-18","Reviews D7":null,"Reviews D30":null,"Reviews D90":null,"Launch Price":"$39,99","Tags":"Open World, RPG, Story Rich, Atmospheric, Mature, Fantasy, Adventure, Singleplayer, Nudity, Choices Matter, Great Soundtrack, Third Person, Medieval, Action, Multiple Endings, Action RPG, Magic, Dark Fantasy, Dark, Sandbox","name_slug":null,"Revenue Estimated":"$26 494 294,77","Modified Tags":"Open World_, RPG_, Story Rich_, Atmospheric_, Mature_, Fantasy_, Adventure_, Singleplayer_, Nudity_, Choices Matter_, Great Soundtrack_, Third Person_, Medieval_, Action_, Multiple Endings_, Action RPG_, Magic_, Dark Fantasy_, Dark_, Sandbox_","Steam Page":"https://store.steampowered.com/app/292030"},{"App ID":945360,"Title":"Among Us","Reviews Total":585788,"Reviews Score Fancy":"92%","Release Date":"2018-11-16","Reviews D7":null,"Reviews D30":null,"Reviews D90":null,"Launch Price":"$4,99","Tags":"Multiplayer, Online Co Op, Social Deduction, Space, Survival, 2D, Funny, Psychological, Co op, Party Game, Cartoony, Local Multiplayer, Casual, Action, Colorful, PvP, Sci fi, Aliens, Minigames, Top Down","name_slug":null,"Revenue Estimated":"$2 923 082,12","Modified Tags":"Multiplayer_, Online Co Op_, Social Deduction_, Space_, Survival_, 2D_, Funny_, Psychological_, Co op_, Party Game_, Cartoony_, Local Multiplayer_, Casual_, Action_, Colorful_, PvP_, Sci fi_, Aliens_, Minigames_, Top Down_","Steam Page":"https://store.steampowered.com/app/945360"}]');
 
-},{}]},["5j6Kf","a0t4e"], "a0t4e", "parcelRequireabb8", {}, null, null, "http://localhost:1234")
+},{}],"dVbdQ":[function(require,module,exports,__globalThis) {
+var $parcel$ReactRefreshHelpers$9c7c = require("@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js");
+$parcel$ReactRefreshHelpers$9c7c.init();
+var prevRefreshReg = globalThis.$RefreshReg$;
+var prevRefreshSig = globalThis.$RefreshSig$;
+$parcel$ReactRefreshHelpers$9c7c.prelude(module);
+
+try {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _jsxDevRuntime = require("react/jsx-dev-runtime");
+var _react = require("react");
+var _reactDefault = parcelHelpers.interopDefault(_react);
+function Smth({ data }) {
+    return /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+        style: {
+            border: "1px solid #ccc",
+            padding: "16px",
+            marginBottom: "16px"
+        },
+        children: [
+            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("h2", {
+                children: "\u041A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u0440\u0435\u043B\u0438\u0437\u043E\u0432 \u043F\u043E \u043C\u0435\u0441\u044F\u0446\u0430\u043C"
+            }, void 0, false, {
+                fileName: "src/components/Smth.jsx",
+                lineNumber: 12,
+                columnNumber: 9
+            }, this),
+            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                children: "\u0417\u0434\u0435\u0441\u044C \u043F\u043E\u0437\u0436\u0435 \u0431\u0443\u0434\u0435\u0442 \u0441\u0442\u043E\u043B\u0431\u0447\u0430\u0442\u0430\u044F \u0434\u0438\u0430\u0433\u0440\u0430\u043C\u043C\u0430"
+            }, void 0, false, {
+                fileName: "src/components/Smth.jsx",
+                lineNumber: 13,
+                columnNumber: 9
+            }, this)
+        ]
+    }, void 0, true, {
+        fileName: "src/components/Smth.jsx",
+        lineNumber: 5,
+        columnNumber: 9
+    }, this);
+}
+_c = Smth;
+exports.default = Smth;
+var _c;
+$RefreshReg$(_c, "Smth");
+
+  $parcel$ReactRefreshHelpers$9c7c.postlude(module);
+} finally {
+  globalThis.$RefreshReg$ = prevRefreshReg;
+  globalThis.$RefreshSig$ = prevRefreshSig;
+}
+},{"react/jsx-dev-runtime":"dVPUn","react":"jMk1U","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"7h6Pi"}]},["5j6Kf","a0t4e"], "a0t4e", "parcelRequireabb8", {}, null, null, "http://localhost:1234")
 
 //# sourceMappingURL=Diploma.31b563d9.js.map

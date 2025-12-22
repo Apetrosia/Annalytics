@@ -1,6 +1,6 @@
 import React from "react";
-import Sales from "./Sales";
 import Releases from "./Releases";
+import Smth from "./Smth";
 import Tags from "./Tags";
 
 import rawData from "../../data/Steam Trends 2023.json";
@@ -18,6 +18,8 @@ function parsePercent(str) {
   const value = Number(normalized);
   return Number.isNaN(value) ? null : value;
 }
+
+const selectedYear = 2023
 
 const data = rawData.map((d) => {
   const price = parsePrice(d["Launch Price"]);
@@ -66,8 +68,8 @@ function App() {
     <div style={{ maxWidth: "900px", margin: "0 auto", padding: "24px" }}>
       <h1>Steam Trends 2023</h1>
 
-      <Sales data={data} />
       <Releases data={data} />
+      <Smth data={data} />
       <Tags data={data} />
     </div>
   );

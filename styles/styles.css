@@ -2,7 +2,10 @@ body {
   font-family: Arial, sans-serif;
   margin: 40px;
   background: #f8f9fa;
+  height: 100%;
+  overflow: hidden; /* запрет скролла всей страницы */
 }
+
 h1 {
   margin-bottom: 40px;
 }

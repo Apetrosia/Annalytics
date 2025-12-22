@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Releases from "./Releases";
-import Smth from "./Smth";
+import Smth from "./Reviews";
 import Tags from "./Tags";
 
-import rawData from "../../data/Steam Trends 2023.json";
+import rawData from "../../data/Steam Trends 2023.json"; // синхронная загрузка файла [file:128]
 
+// вспомогательная: строку "$14,99" -> число 14.99
 function parsePrice(str) {
   if (!str) return 0;
   const normalized = str.replace(/\$/g, "").replace(/\s/g, "").replace(",", ".");
@@ -12,6 +13,7 @@ function parsePrice(str) {
   return Number.isNaN(value) ? 0 : value;
 }
 
+// вспомогательная: строку "88%" -> число 88
 function parsePercent(str) {
   if (!str) return null;
   const normalized = str.replace("%", "").trim();
@@ -19,67 +21,97 @@ function parsePercent(str) {
   return Number.isNaN(value) ? null : value;
 }
 
-// обработку данных лучше мемоизировать, чтобы не пересчитывать на каждый рендер
-const processedData = rawData.map((d) => {
-  const price = parsePrice(d["Launch Price"]);
-  const reviewsTotal = Number(d["Reviews Total"]) || 0;
-  const sales = price * reviewsTotal;
-
-  const dateStr = d["Release Date"];
-  const dateObj = dateStr ? new Date(dateStr) : null;
-
-  const releaseYear = dateObj ? dateObj.getFullYear() : null;
-  const releaseMonth = dateObj ? dateObj.getMonth() + 1 : null;
-  const releaseDay = dateObj ? dateObj.getDate() : null;
-  const releaseHour = dateObj ? dateObj.getHours() : null;
-  const releaseMinute = dateObj ? dateObj.getMinutes() : null;
-
-  const reviewScore = parsePercent(d["Reviews Score Fancy"]);
-
-  const {
-    "Launch Price": _launchPrice,
-    "Release Date": _releaseDate,
-    "Reviews D7": _reviewsD7,
-    "Reviews D30": _reviewsD30,
-    "Reviews D90": _reviewsD90,
-    "Revenue Estimated": _revenueEstimated,
-    name_slug: _nameSlug,
-    ...rest
-  } = d;
-
-  return {
-    ...rest,
-    price,
-    sales,
-    releaseYear,
-    releaseMonth,
-    releaseDay,
-    releaseHour,
-    releaseMinute,
-    reviewScore,
-  };
-});
-
-// узнаем, какие годы вообще есть в датасете
-const availableYears = Array.from(
-  new Set(processedData.map((d) => d.releaseYear).filter(Boolean))
-).sort((a, b) => b - a);
-
-console.log("Processed data (first 3 rows):", processedData.slice(0, 3));
-
 function App() {
-  // по умолчанию берём последний год из датасета
-  const [selectedYear, setSelectedYear] = useState(
-    availableYears[0] || 2023
-  );
+  const [processedData, setProcessedData] = useState([]);
+  const [availableYears, setAvailableYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState(null);
+  const [processing, setProcessing] = useState(true);
 
+  // асинхронный препроцесс уже загруженного rawData
+  useEffect(() => {
+    let cancelled = false;
+
+    async function preprocess() {
+      try {
+        setProcessing(true);
+
+        // имитируем «асинхронность», чтобы не блокировать основной поток
+        // можно убрать setTimeout, если данных немного
+        const mapped = await new Promise((resolve) => {
+          setTimeout(() => {
+            const result = rawData.map((d) => {
+              const price = parsePrice(d["Launch Price"]);
+              const reviewsTotal = Number(d["Reviews Total"]) || 0;
+              const sales = price * reviewsTotal;
+
+              const dateStr = d["Release Date"];
+              const dateObj = dateStr ? new Date(dateStr) : null;
+
+              const releaseYear = dateObj ? dateObj.getFullYear() : null;
+              const releaseMonth = dateObj ? dateObj.getMonth() + 1 : null;
+              const releaseDay = dateObj ? dateObj.getDate() : null;
+              const releaseHour = dateObj ? dateObj.getHours() : null;
+              const releaseMinute = dateObj ? dateObj.getMinutes() : null;
+
+              const reviewScore = parsePercent(d["Reviews Score Fancy"]);
+
+              const {
+                "Launch Price": _launchPrice,
+                "Release Date": _releaseDate,
+                "Reviews D7": _reviewsD7,
+                "Reviews D30": _reviewsD30,
+                "Reviews D90": _reviewsD90,
+                "Revenue Estimated": _revenueEstimated,
+                name_slug: _nameSlug,
+                ...rest
+              } = d;
+
+              return {
+                ...rest,
+                price,
+                sales,
+                releaseYear,
+                releaseMonth,
+                releaseDay,
+                releaseHour,
+                releaseMinute,
+                reviewScore,
+              };
+            });
+            resolve(result);
+          }, 0);
+        });
+
+        if (cancelled) return;
+
+        const years = Array.from(
+          new Set(mapped.map((d) => d.releaseYear).filter(Boolean))
+        ).sort((a, b) => b - a);
+
+        setProcessedData(mapped);
+        setAvailableYears(years);
+        setSelectedYear((prev) => prev ?? years[0] ?? 2023);
+
+        console.log("Processed data (first 3 rows):", mapped.slice(0, 3));
+      } finally {
+        if (!cancelled) setProcessing(false);
+      }
+    }
+
+    preprocess();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // фильтрация по выбранному году
   const filteredData = useMemo(() => {
     if (!selectedYear) return processedData;
     return processedData.filter(
       (d) => Number(d.releaseYear) === Number(selectedYear)
     );
   }, [processedData, selectedYear]);
-
 
   return (
     <div
@@ -104,8 +136,14 @@ function App() {
       >
         <h1>Steam Trends 2023</h1>
 
-        <Releases data={filteredData} selectedYear={selectedYear} />
-        <Smth data={filteredData} />
+        {processing && (
+          <div style={{ marginBottom: "12px", fontSize: "12px", color: "#777" }}>
+            Идёт обработка данных…
+          </div>
+        )}
+
+        <Releases data={filteredData} />
+        <Reviews data={filteredData} />
         <Tags data={filteredData} />
       </div>
 
@@ -134,6 +172,7 @@ function App() {
             value={selectedYear ?? ""}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
             style={{ width: "100%", padding: "4px 8px" }}
+            disabled={!availableYears.length}
           >
             {availableYears.map((year) => (
               <option key={year} value={year}>

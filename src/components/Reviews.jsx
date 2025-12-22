@@ -1,6 +1,6 @@
 import React from "react";
 
-function Smth({ data }) {
+function Reviews({ data }) {
     return (
         <div
         style={{
@@ -9,10 +9,10 @@ function Smth({ data }) {
             marginBottom: "16px",
         }}
         >
-        <h2>Количество релизов по месяцам</h2>
-        <div>Здесь позже будет столбчатая диаграмма</div>
+        <h2></h2>
+        <div>Здесь позже будет столбчатая диаграмма обзоров игр по ценам</div>
         </div>
     );
 }
 
-export default Smth;
+export default Reviews;

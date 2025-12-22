@@ -6,24 +6,14 @@ function Releases({ data, selectedYear }) {
     const tooltipRef = useRef(null);
 
     useEffect(() => {
-        // 1. Фильтруем по выбранному году
-        const yearData = data.filter((d) => d.releaseYear === selectedYear);
-
-        // 2. Считаем количество релизов по месяцам (1–12 в данных -> 0–11 в индексах)
         const countsByMonth = new Array(12).fill(0);
-        yearData.forEach((d) => {
+        data.forEach((d) => {
             const m = d.releaseMonth; // 1–12
             if (m >= 1 && m <= 12) {
                 countsByMonth[m - 1] += 1;
             }
         });
 
-        /*const points = values.map((v, i) => ({
-            monthIndex: i,
-            value: v,
-        }));*/
-
-        // массив точек для d3
         const points = countsByMonth.map((v, i) => ({
             monthIndex: i, // 0–11
             value: v,
@@ -110,7 +100,7 @@ function Releases({ data, selectedYear }) {
                 d3.select(this).attr("fill", "#1976d2");
                 tooltip.style("opacity", 0);
             });
-    }, []);
+    }, [data]);
 
     console.log("Data is ready");
 

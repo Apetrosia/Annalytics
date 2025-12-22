@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import Releases from "./Releases";
 import Smth from "./Smth";
 import Tags from "./Tags";
@@ -19,9 +19,8 @@ function parsePercent(str) {
   return Number.isNaN(value) ? null : value;
 }
 
-const selectedYear = 2012
-
-const data = rawData.map((d) => {
+// обработку данных лучше мемоизировать, чтобы не пересчитывать на каждый рендер
+const processedData = rawData.map((d) => {
   const price = parsePrice(d["Launch Price"]);
   const reviewsTotal = Number(d["Reviews Total"]) || 0;
   const sales = price * reviewsTotal;
@@ -61,16 +60,93 @@ const data = rawData.map((d) => {
   };
 });
 
-console.log("Processed data (first 3 rows):", data.slice(0, 3));
+// узнаем, какие годы вообще есть в датасете
+const availableYears = Array.from(
+  new Set(processedData.map((d) => d.releaseYear).filter(Boolean))
+).sort((a, b) => b - a);
+
+console.log("Processed data (first 3 rows):", processedData.slice(0, 3));
 
 function App() {
-  return (
-    <div style={{ maxWidth: "900px", margin: "0 auto", padding: "24px" }}>
-      <h1>Steam Trends 2023</h1>
+  // по умолчанию берём последний год из датасета
+  const [selectedYear, setSelectedYear] = useState(
+    availableYears[0] || 2023
+  );
 
-      <Releases data={data} selectedYear={selectedYear} />
-      <Smth data={data} />
-      <Tags data={data} />
+  const filteredData = useMemo(() => {
+    if (!selectedYear) return processedData;
+    return processedData.filter(
+      (d) => Number(d.releaseYear) === Number(selectedYear)
+    );
+  }, [processedData, selectedYear]);
+
+
+  return (
+    <div
+      style={{
+        maxWidth: "1200px",
+        margin: "0 auto",
+        padding: "24px",
+        display: "flex",
+        gap: "24px",
+        height: "100vh",
+        boxSizing: "border-box",
+      }}
+    >
+      {/* Левая колонка: графики со скроллом */}
+      <div
+        style={{
+          flex: "1 1 auto",
+          maxHeight: "calc(100vh - 48px)",
+          overflowY: "auto",
+          paddingRight: "8px",
+        }}
+      >
+        <h1>Steam Trends 2023</h1>
+
+        <Releases data={filteredData} selectedYear={selectedYear} />
+        <Smth data={filteredData} />
+        <Tags data={filteredData} />
+      </div>
+
+      {/* Правая колонка: фиксированная панель фильтров */}
+      <div
+        style={{
+          flex: "0 0 260px",
+          position: "sticky",
+          top: "24px",
+          alignSelf: "flex-start",
+          border: "1px solid #ccc",
+          borderRadius: "8px",
+          padding: "16px",
+          height: "fit-content",
+          background: "#fafafa",
+        }}
+      >
+        <h3 style={{ marginTop: 0 }}>Фильтры</h3>
+
+        {/* Фильтр по году */}
+        <div style={{ marginBottom: "12px" }}>
+          <div style={{ fontSize: "12px", color: "#555", marginBottom: "4px" }}>
+            Год
+          </div>
+          <select
+            value={selectedYear ?? ""}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            style={{ width: "100%", padding: "4px 8px" }}
+          >
+            {availableYears.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ fontSize: "12px", color: "#777" }}>
+          Здесь будут элементы управления фильтрами (год, жанры, теги и т.д.).
+        </div>
+      </div>
     </div>
   );
 }

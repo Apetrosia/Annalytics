@@ -8,14 +8,14 @@ function Releases({ data }) {
     useEffect(() => {
         const countsByMonth = new Array(12).fill(0);
         data.forEach((d) => {
-            const m = d.releaseMonth; // 1–12
+            const m = d.releaseMonth;
             if (m >= 1 && m <= 12) {
                 countsByMonth[m - 1] += 1;
             }
         });
 
         const points = countsByMonth.map((v, i) => ({
-            monthIndex: i, // 0–11
+            monthIndex: i,
             value: v,
         }));
 
@@ -46,7 +46,6 @@ function Releases({ data }) {
             .nice()
             .range([innerHeight, 0]);
 
-        // оси (как раньше, опускаю подробности)
         const xAxis = d3
             .axisBottom(xScale)
             .tickFormat((d) => d3.timeFormat("%b")(new Date(2023, d, 1)));
@@ -71,7 +70,6 @@ function Releases({ data }) {
 
         const tooltip = d3.select(tooltipRef.current);
 
-        // точки + тултипы
         g.selectAll(".point")
             .data(points)
             .enter()
@@ -90,13 +88,11 @@ function Releases({ data }) {
                     .style("top", event.pageY + "px");
             })
             .on("mousemove", function (event) {
-                // при движении мыши обновляем позицию тултипа
                 tooltip
                     .style("left", event.pageX + "px")
                     .style("top", event.pageY + "px");
             })
             .on("mouseout", function () {
-                // возвращаем цвет и прячем тултип
                 d3.select(this).attr("fill", "#1976d2");
                 tooltip.style("opacity", 0);
             });

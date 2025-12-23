@@ -3,7 +3,7 @@ body {
   margin: 40px;
   background: #f8f9fa;
   height: 100%;
-  overflow: hidden; /* запрет скролла всей страницы */
+  overflow: hidden;
 }
 
 h1 {

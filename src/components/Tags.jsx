@@ -1,14 +1,13 @@
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
 
-function Tags({ data }) {
+function Tags({ data, setSelectedTag }) {
   const svgRef = useRef(null);
   const tooltipRef = useRef(null);
 
   useEffect(() => {
     if (!Array.isArray(data) || data.length === 0) return;
 
-    // 1. Считаем, сколько игр у каждого тега
     const tagCounts = new Map();
 
     data.forEach((d) => {
@@ -22,7 +21,6 @@ function Tags({ data }) {
       });
     });
 
-    // 2. Топ-9 + "Другое"
     const sortedTags = Array.from(tagCounts.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 9);
@@ -38,11 +36,9 @@ function Tags({ data }) {
 
     const tags = sortedTags.map(([label, value]) => ({ label, value }));
 
-    // 3. Очистка
     d3.select(svgRef.current).selectAll("*").remove();
     const tooltip = d3.select(tooltipRef.current);
 
-    // 4. Настройки SVG
     const width = 400;
     const height = 400;
     const radius = Math.min(width, height) / 2 - 20;
@@ -58,11 +54,10 @@ function Tags({ data }) {
       .append("g")
       .attr("transform", `translate(${width / 2},${height / 2})`);
 
-    // 5. Цвета и pie
     const color = d3
       .scaleOrdinal()
       .domain(tags.map((d) => d.label))
-      .range(d3.schemeCategory10.map(() => `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`));
+      .range(d3.schemeCategory10.map(() => `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`));
 
     const pie = d3.pie().value((d) => d.value);
     const arc = d3
@@ -73,9 +68,8 @@ function Tags({ data }) {
     const arcHover = d3
       .arc()
       .innerRadius(0)
-      .outerRadius(radius + 20); // увеличение радиуса на 10px
+      .outerRadius(radius + 20);
 
-    // 6. Арки
     const arcs = g
       .selectAll(".arc")
       .data(pie(tags))
@@ -91,14 +85,12 @@ function Tags({ data }) {
       .style("stroke", "white")
       .style("stroke-width", 1)
       .on("mouseover", function (event, d) {
-        // Показать тултип
         tooltip
           .style("opacity", 1)
           .html(`${d.data.label}: ${d.data.value}`)
           .style("left", (event.pageX + 10) + "px")
           .style("top", (event.pageY - 28) + "px");
 
-        // Анимация увеличения радиуса
         d3.select(this)
           .transition()
           .duration(300)
@@ -106,20 +98,26 @@ function Tags({ data }) {
           .attr("d", arcHover(d));
       })
       .on("mouseout", function (event, d) {
-        // Скрыть тултип
         tooltip.style("opacity", 0);
 
-        // Анимация возврата
         d3.select(this)
           .transition()
           .duration(300)
           .ease(d3.easeCubicInOut)
           .attr("d", arc(d));
+      })
+      .on("click", function (event, d) {
+        if (setSelectedTag) {
+          if (d.data.label === "Другое") {
+            setSelectedTag("all");
+          } else {
+            setSelectedTag(d.data.label);
+          }
+        }
       });
 
-    // 7. Надписи ТОЛЬКО для больших секторов (>7%)
     const total = d3.sum(tags, (d) => d.value);
-    const labelThreshold = total * 0.07; // 7%
+    const labelThreshold = total * 0.07;
 
     arcs
       .append("text")
@@ -127,7 +125,7 @@ function Tags({ data }) {
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
       .style("font-size", "12px")
-      .style("fill", "#fff")
+      .style("fill", "#f5f5f5ff")
       .style("pointer-events", "none")
       .text((d) => {
         return d.data.value >= labelThreshold && d.data.label.length <= 10 ? d.data.label : "";

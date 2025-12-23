@@ -3,9 +3,8 @@ import Releases from "./Releases";
 import Reviews from "./Reviews";
 import Tags from "./Tags";
 
-import rawData from "../../data/Steam Trends 2023.json"; // синхронная загрузка файла [file:128]
+import rawData from "../../data/Steam Trends 2023.json";
 
-// вспомогательная: строку "$14,99" -> число 14.99
 function parsePrice(str) {
   if (!str) return 0;
   const normalized = str.replace(/\$/g, "").replace(/\s/g, "").replace(",", ".");
@@ -13,7 +12,6 @@ function parsePrice(str) {
   return Number.isNaN(value) ? 0 : value;
 }
 
-// вспомогательная: строку "88%" -> число 88
 function parsePercent(str) {
   if (!str) return null;
   const normalized = str.replace("%", "").trim();
@@ -25,9 +23,10 @@ function App() {
   const [processedData, setProcessedData] = useState([]);
   const [availableYears, setAvailableYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
+  const [availableTags, setAvailableTags] = useState([]);
+  const [selectedTag, setSelectedTag] = useState("all");
   const [processing, setProcessing] = useState(true);
 
-  // асинхронный препроцесс уже загруженного rawData
   useEffect(() => {
     let cancelled = false;
 
@@ -35,8 +34,6 @@ function App() {
       try {
         setProcessing(true);
 
-        // имитируем «асинхронность», чтобы не блокировать основной поток
-        // можно убрать setTimeout, если данных немного
         const mapped = await new Promise((resolve) => {
           setTimeout(() => {
             const result = rawData.map((d) => {
@@ -92,6 +89,21 @@ function App() {
         setAvailableYears(years);
         setSelectedYear((prev) => prev ?? years[0] ?? 2023);
 
+        const tagsForInitialYear = new Set();
+        mapped
+          .filter((d) => d.releaseYear === selectedYear)
+          .forEach((d) => {
+            const tagsStr = d.Tags;
+            if (!tagsStr) return;
+            tagsStr.split(",").forEach((raw) => {
+              const t = raw.trim();
+              if (t) tagsForInitialYear.add(t);
+            });
+          });
+
+        setAvailableTags(["all", ...Array.from(tagsForInitialYear).sort()]);
+        setSelectedTag("all");
+
         console.log("Processed data (first 3 rows):", mapped.slice(0, 3));
       } finally {
         if (!cancelled) setProcessing(false);
@@ -105,13 +117,49 @@ function App() {
     };
   }, []);
 
-  // фильтрация по выбранному году
+  useEffect(() => {
+    if (!selectedYear || !processedData.length) return;
+
+    const tagsSet = new Set();
+
+    processedData
+      .filter((d) => Number(d.releaseYear) === Number(selectedYear))
+      .forEach((d) => {
+        const tagsStr = d.Tags;
+        if (!tagsStr) return;
+        tagsStr.split(",").forEach((raw) => {
+          const t = raw.trim();
+          if (t) tagsSet.add(t);
+        });
+      });
+
+    const tags = Array.from(tagsSet).sort();
+    setAvailableTags(["all", ...tags]);
+
+    setSelectedTag((prev) =>
+      prev && tags.includes(prev) ? prev : "all"
+    );
+  }, [selectedYear, processedData]);
+
+
   const filteredData = useMemo(() => {
     if (!selectedYear) return processedData;
-    return processedData.filter(
+
+    let result = processedData.filter(
       (d) => Number(d.releaseYear) === Number(selectedYear)
     );
-  }, [processedData, selectedYear]);
+
+    if (selectedTag && selectedTag !== "all") {
+      result = result.filter((d) => {
+        const tagsStr = d.Tags;
+        if (!tagsStr) return false;
+        return tagsStr.split(",").map((t) => t.trim()).includes(selectedTag);
+      });
+    }
+
+    return result;
+  }, [processedData, selectedYear, selectedTag]);
+
 
   return (
     <div
@@ -125,7 +173,6 @@ function App() {
         boxSizing: "border-box",
       }}
     >
-      {/* Левая колонка: графики со скроллом */}
       <div
         style={{
           flex: "1 1 auto",
@@ -144,10 +191,9 @@ function App() {
 
         <Releases data={filteredData} />
         <Reviews data={filteredData} />
-        <Tags data={filteredData} />
+        <Tags data={filteredData} setSelectedTag={setSelectedTag} />
       </div>
 
-      {/* Правая колонка: фиксированная панель фильтров */}
       <div
         style={{
           flex: "0 0 260px",
@@ -163,7 +209,6 @@ function App() {
       >
         <h3 style={{ marginTop: 0 }}>Фильтры</h3>
 
-        {/* Фильтр по году */}
         <div style={{ marginBottom: "12px" }}>
           <div style={{ fontSize: "12px", color: "#555", marginBottom: "4px" }}>
             Год
@@ -177,6 +222,21 @@ function App() {
             {availableYears.map((year) => (
               <option key={year} value={year}>
                 {year}
+              </option>
+            ))}
+          </select>
+          <div style={{ fontSize: "12px", color: "#555", marginBottom: "4px" }}>
+            Тег
+          </div>
+          <select
+            value={selectedTag}
+            onChange={(e) => setSelectedTag(e.target.value)}
+            style={{ width: "100%", padding: "4px 8px" }}
+            disabled={!availableTags.length}
+          >
+            {availableTags.map((tag) => (
+              <option key={tag} value={tag}>
+                {tag === "all" ? "Все теги" : tag}
               </option>
             ))}
           </select>

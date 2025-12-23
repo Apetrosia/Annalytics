@@ -125,7 +125,7 @@ function Tags({ data, setSelectedTag }) {
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
       .style("font-size", "12px")
-      .style("fill", "#f5f5f5ff")
+      .style("fill", "#f3f3f3ff")
       .style("pointer-events", "none")
       .text((d) => {
         return d.data.value >= labelThreshold && d.data.label.length <= 10 ? d.data.label : "";

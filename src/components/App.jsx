@@ -182,13 +182,6 @@ function App() {
         }}
       >
         <h1>Steam Trends 2023</h1>
-
-        {processing && (
-          <div style={{ marginBottom: "12px", fontSize: "12px", color: "#777" }}>
-            Идёт обработка данных…
-          </div>
-        )}
-
         <Releases data={filteredData} />
         <Reviews data={filteredData} />
         <Tags data={filteredData} setSelectedTag={setSelectedTag} />
@@ -209,8 +202,8 @@ function App() {
       >
         <h3 style={{ marginTop: 0 }}>Фильтры</h3>
 
-        <div style={{ marginBottom: "12px" }}>
-          <div style={{ fontSize: "12px", color: "#555", marginBottom: "4px" }}>
+        <div style={{ marginBottom: "5px" }}>
+          <div style={{ paddingTop: "5px", fontSize: "12px", color: "#555", marginBottom: "4px" }}>
             Год
           </div>
           <select
@@ -225,7 +218,7 @@ function App() {
               </option>
             ))}
           </select>
-          <div style={{ fontSize: "12px", color: "#555", marginBottom: "4px" }}>
+          <div style={{ paddingTop: "10px", fontSize: "12px", color: "#555", marginBottom: "4px" }}>
             Тег
           </div>
           <select

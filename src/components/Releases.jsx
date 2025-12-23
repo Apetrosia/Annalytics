@@ -80,7 +80,7 @@ function Releases({ data }) {
             .attr("r", 4)
             .attr("fill", "#1976d2")
             .on("mouseover", function (event, d) {
-                d3.select(this).attr("fill", "#da963dff");
+                d3.select(this).attr("fill", "#42a5f5");
                 tooltip
                     .style("opacity", 1)
                     .html(`Релизов: ${d.value}`)
